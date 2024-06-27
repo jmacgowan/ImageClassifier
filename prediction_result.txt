@@ -1,0 +1,6 @@
+Prediction for sh.jpg: baseball
+Prediction for sh.jpg: baseball
+Prediction for shinty.jpg: baseball
+Prediction for base2.jpg: Shinty
+Prediction for base2.jpg: Shinty
+Prediction for download.jpg: Shinty

@@ -23,16 +23,14 @@ def create_model():
     model.compile(optimizer='adam', loss=tf.losses.BinaryCrossentropy(), metrics=['accuracy'])
     return model
 
-def display_image(dataset, title):
-    for images, labels in dataset.take(1):
-        img = images[0].numpy().astype("uint8")
-        plt.imshow(img)
-        plt.title(title)
-        plt.axis('off')
-        plt.show()
+def get_image_types():
+    data_dir = 'data'
+    subdirectories = [d.name for d in os.scandir(data_dir) if d.is_dir()]
+    if len(subdirectories) != 2:
+        raise ValueError("There must be exactly 2 subdirectories in the 'data' directory.")
+    return subdirectories[0], subdirectories[1]
 
-def train_model():
-    print("Thank you for this")
+def train_model(image_type1, image_type2, model_name):
     print("Processing...")
 
     # Clean the image data
@@ -51,13 +49,6 @@ def train_model():
     val = data.skip(train_size).take(val_size)
     test = data.skip(train_size + val_size).take(test_size)
 
-    # Display images from each set to identify the types
-    print("Please identify the type of the following images:")
-    display_image(train, "Training Image Example")
-    image_type1 = input("Enter the first type of images: ")
-    display_image(train.skip(1), "Another Training Image Example")
-    image_type2 = input("Enter the second type of images: ")
-
     # Define the model
     model = create_model()
 
@@ -68,12 +59,20 @@ def train_model():
     # Train the model
     hist = model.fit(train, epochs=20, validation_data=val, callbacks=[tensorboard_callback])
 
+    # Create directories for saving the model and plots
+    model_path = os.path.join('models', model_name + '.keras')
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+
     # Save the model
-    model.save('trained_model.h5')
+    model.save(model_path)
 
     # Save the training history
-    with open('training_history.npy', 'wb') as f:
+    with open(os.path.join(os.path.dirname(model_path), 'training_history.npy'), 'wb') as f:
         np.save(f, hist.history)
+
+    # Create directories for plots
+    plot_dir = os.path.join(os.path.dirname(model_path), 'plots')
+    os.makedirs(plot_dir, exist_ok=True)
 
     # Plot and save the training and validation loss
     fig = plt.figure()
@@ -81,7 +80,7 @@ def train_model():
     plt.plot(hist.history['val_loss'], color='orange', label='val_loss')
     fig.suptitle('Loss', fontsize=20)
     plt.legend(loc="upper left")
-    plt.savefig('loss_plot.png')
+    plt.savefig(os.path.join(plot_dir, 'loss_plot.png'))
     plt.show()
 
     # Plot and save the training and validation accuracy
@@ -90,7 +89,7 @@ def train_model():
     plt.plot(hist.history['val_accuracy'], color='orange', label='val_accuracy')
     fig.suptitle('Accuracy', fontsize=20)
     plt.legend(loc='upper left')
-    plt.savefig('accuracy_plot.png')
+    plt.savefig(os.path.join(plot_dir, 'accuracy_plot.png'))
     plt.show()
 
     # Evaluate the model on the test set
@@ -108,10 +107,17 @@ def train_model():
     print(f'Precision: {pre.result().numpy()}, Recall: {re.result().numpy()}, Accuracy: {acc.result().numpy()}')
 
     # Save evaluation metrics
-    with open('evaluation_metrics.txt', 'w') as f:
+    with open(os.path.join(os.path.dirname(model_path), 'evaluation_metrics.txt'), 'w') as f:
         f.write(f'Precision: {pre.result().numpy()}\n')
         f.write(f'Recall: {re.result().numpy()}\n')
         f.write(f'Accuracy: {acc.result().numpy()}\n')
+        
+    # Save filenames
+    with open(os.path.join(os.path.dirname(model_path), model_name + '.txt'), 'w') as f:
+        f.write(image_type1 +',' + image_type2)
+
 
 if __name__ == "__main__":
-    train_model()
+    model_name = input("Enter the name for the model: ")
+    image_type1, image_type2 = get_image_types()
+    train_model(image_type1, image_type2, model_name)
