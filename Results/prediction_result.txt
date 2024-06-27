@@ -1,0 +1,3 @@
+Prediction for base2.jpg: Shinty
+Prediction for base2.jpg: Shinty
+Prediction for shinty.jpg: baseball
