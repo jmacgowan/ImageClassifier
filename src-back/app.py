@@ -30,7 +30,6 @@ def predict_image(model, image_path, image_type1, image_type2):
     prediction = image_type1 if yhat > 0.5 else image_type2
     return prediction
 
-# Route to upload image and get prediction
 @app.route('/predict', methods=['POST'])
 def predict():
     if 'file' not in request.files:
@@ -46,12 +45,23 @@ def predict():
         model_name = request.form.get('modelName')
         if not model_name:
             return jsonify({'error': 'No model name provided'}), 400
+        
         model = load_model(model_name)
+        if not model:
+            return jsonify({'error': f'Model {model_name} not found'}), 400
+        
         image_type1, image_type2 = get_image_types(model_name)
+        if not image_type1 or not image_type2:
+            return jsonify({'error': f'Image types not found for model {model_name}'}), 400
         
         prediction = predict_image(model, filepath, image_type1, image_type2)
-        print(prediction)
         return jsonify({'prediction': prediction})
+
+@app.route('/models', methods=['GET'])
+def list_models():
+    models_dir = 'models'  # Directory where models are stored
+    models = [f[:-6] for f in os.listdir(models_dir) if f.endswith('.keras')]
+    return jsonify({'models': models})
 
 # Route to get image types
 @app.route('/get_image_types', methods=['POST'])
