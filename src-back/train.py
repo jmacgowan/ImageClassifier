@@ -2,11 +2,10 @@ import tensorflow as tf
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from ImageClean import imageClean
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
 from tensorflow.keras.metrics import Precision, Recall, BinaryAccuracy
-
-from ImageClean import imageClean
 
 def create_model():
     model = Sequential([
@@ -33,7 +32,7 @@ def get_image_types():
 def train_model(image_type1, image_type2, model_name):
     print("Processing...")
 
-    # Clean the image data
+    # Clean the image data if needed
     imageClean()
 
     # Load the dataset
@@ -115,8 +114,3 @@ def train_model(image_type1, image_type2, model_name):
     with open(os.path.join('models', model_name + '.txt'), 'w') as f:
         f.write(image_type1 +',' + image_type2)
 
-
-if __name__ == "__main__":
-    model_name = input("Enter the name for the model: ")
-    image_type1, image_type2 = get_image_types()
-    train_model(image_type1, image_type2, model_name)

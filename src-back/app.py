@@ -1,6 +1,7 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from train import train_model
 
 from werkzeug.utils import secure_filename
 import tensorflow as tf
@@ -63,16 +64,6 @@ def list_models():
     models = [f[:-6] for f in os.listdir(models_dir) if f.endswith('.keras')]
     return jsonify({'models': models})
 
-# Route to get image types
-@app.route('/get_image_types', methods=['POST'])
-def get_image_types_route():
-    model_name = request.form['model_name']
-    try:
-        image_type1, image_type2 = get_image_types(model_name)
-        return jsonify({'image_type1': image_type1, 'image_type2': image_type2})
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
 def get_image_types(model_name):
     label_file_path = os.path.join('models', model_name + '.txt')
     if not os.path.exists(label_file_path):
@@ -83,6 +74,28 @@ def get_image_types(model_name):
         if len(image_types) != 2:
             raise ValueError("The label file must contain exactly two labels.")
     return image_types[0], image_types[1]
+
+@app.route('/train', methods=['POST'])
+def train():
+    # Ensure model name is provided
+    model_name = request.form.get('modelName')
+    if not model_name:
+        return jsonify({'error': 'No model name provided'}), 400
+
+    # Ensure two folders are uploaded
+    if 'file1' not in request.files or 'file2' not in request.files:
+        return jsonify({'error': 'Two folders must be uploaded'}), 400
+    
+    # Get folder names from uploaded files
+    folder1_name = request.files['file1'].filename
+    folder2_name = request.files['file2'].filename
+
+    # Call train_model function with folder names and model name
+    try:
+        train_model(folder1_name, folder2_name, model_name)
+        return jsonify({'success': f'Model {model_name} trained successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to train model: {str(e)}'}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
