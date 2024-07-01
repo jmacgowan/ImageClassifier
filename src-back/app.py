@@ -1,12 +1,11 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from train import train_model
-
 from werkzeug.utils import secure_filename
 import tensorflow as tf
 import numpy as np
 import cv2
+from train import train_model
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -83,16 +82,29 @@ def train():
         return jsonify({'error': 'No model name provided'}), 400
 
     # Ensure two folders are uploaded
-    if 'file1' not in request.files or 'file2' not in request.files:
+    if 'folder1Files' not in request.files or 'folder2Files' not in request.files:
         return jsonify({'error': 'Two folders must be uploaded'}), 400
-    
-    # Get folder names from uploaded files
-    folder1_name = request.files['file1'].filename
-    folder2_name = request.files['file2'].filename
+
+    # Create directories for the uploaded files
+    folder1_dir = os.path.join(app.config['UPLOAD_FOLDER'], request.form.get('folder1Name'))
+    folder2_dir = os.path.join(app.config['UPLOAD_FOLDER'], request.form.get('folder2Name'))
+    os.makedirs(folder1_dir, exist_ok=True)
+    os.makedirs(folder2_dir, exist_ok=True)
+
+    # Save uploaded files to their respective directories
+    folder1_files = request.files.getlist('folder1Files')
+    for file in folder1_files:
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(folder1_dir, filename))
+
+    folder2_files = request.files.getlist('folder2Files')
+    for file in folder2_files:
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(folder2_dir, filename))
 
     # Call train_model function with folder names and model name
     try:
-        train_model(folder1_name, folder2_name, model_name)
+        train_model(folder1_dir, folder2_dir, model_name)
         return jsonify({'success': f'Model {model_name} trained successfully'}), 200
     except Exception as e:
         return jsonify({'error': f'Failed to train model: {str(e)}'}), 500

@@ -35,7 +35,7 @@ const FileUpload = () => {
     e.preventDefault();
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('modelName', modelName); // Ensure this matches Flask endpoint's expectation
+    formData.append('modelName', modelName); 
   
     try {
       setIsLoading(true);
