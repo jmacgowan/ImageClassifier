@@ -3,7 +3,7 @@ import cv2
 import imghdr
 
 def imageClean():
-    data_dir = 'data'
+    data_dir = 'uploads'
     image_exts = ['jpeg', 'jpg', 'bmp', 'png']
     for image_class in os.listdir(data_dir):
         for image in os.listdir(os.path.join(data_dir, image_class)):

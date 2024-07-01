@@ -22,24 +22,21 @@ def create_model():
     model.compile(optimizer='adam', loss=tf.losses.BinaryCrossentropy(), metrics=['accuracy'])
     return model
 
-def get_image_types():
-    data_dir = 'data'
+def get_model_names():
+    data_dir = 'uploads'
     subdirectories = [d.name for d in os.scandir(data_dir) if d.is_dir()]
     if len(subdirectories) != 2:
-        raise ValueError("There must be exactly 2 subdirectories in the 'data' directory.")
+        raise ValueError("There must be exactly 2 subdirectories in the 'uploads' directory.")
     return subdirectories[0], subdirectories[1]
 
 def train_model(image_type1, image_type2, model_name):
     print("Processing...")
 
-    # Clean the image data if needed
     imageClean()
 
-    # Load the dataset
-    data = tf.keras.utils.image_dataset_from_directory('data')
+    data = tf.keras.utils.image_dataset_from_directory('uploads')
     data = data.map(lambda x, y: (x / 255, y))
 
-    # Split the dataset into training, validation, and test sets
     train_size = int(len(data) * 0.7)
     val_size = int(len(data) * 0.2)
     test_size = int(len(data) * 0.1) + 1

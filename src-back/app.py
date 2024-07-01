@@ -27,7 +27,7 @@ def predict_image(model, image_path, image_type1, image_type2):
     resize = tf.image.resize(img, (256, 256))
     yhat = model.predict(np.expand_dims(resize / 255, 0))
 
-    prediction = image_type1 if yhat > 0.5 else image_type2
+    prediction = image_type1 if yhat < 0.5 else image_type2
     return prediction
 
 @app.route('/predict', methods=['POST'])
@@ -50,7 +50,7 @@ def predict():
         if not model:
             return jsonify({'error': f'Model {model_name} not found'}), 400
         
-        image_type1, image_type2 = get_image_types(model_name)
+        image_type1, image_type2 = get_model_names(model_name)
         if not image_type1 or not image_type2:
             return jsonify({'error': f'Image types not found for model {model_name}'}), 400
         
@@ -59,11 +59,11 @@ def predict():
 
 @app.route('/models', methods=['GET'])
 def list_models():
-    models_dir = 'models'  # Directory where models are stored
+    models_dir = 'models' 
     models = [f[:-6] for f in os.listdir(models_dir) if f.endswith('.keras')]
     return jsonify({'models': models})
 
-def get_image_types(model_name):
+def get_model_names(model_name):
     label_file_path = os.path.join('models', model_name + '.txt')
     if not os.path.exists(label_file_path):
         raise FileNotFoundError(f"Label file {label_file_path} not found.")
