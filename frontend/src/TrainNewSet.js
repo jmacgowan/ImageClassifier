@@ -1,65 +1,42 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Button, Typography, Container, Box, Card, CardContent, FormControl, TextField } from '@mui/material';
+import { Button, Typography, Container, Box, Card, CardContent, FormControl, InputLabel, TextField } from '@mui/material';
 
 const TrainNewSet = () => {
-  const [folder1Files, setFolder1Files] = useState(null);
-  const [folder2Files, setFolder2Files] = useState(null);
-  const [folder1Name, setFolder1Name] = useState('');
-  const [folder2Name, setFolder2Name] = useState('');
+  const [file1, setFile1] = useState(null);
+  const [file2, setFile2] = useState(null);
   const [modelName, setModelName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState('');
+
+  const handleFileChange = (e) => {
+    setFile1(e.target.files[0]);
+  };
+
+  const handleFileChange2 = (e) => {
+    setFile2(e.target.files[0]);
+  };
 
   const handleModelNameChange = (e) => {
     setModelName(e.target.value);
   };
 
-  const handleFolder1Change = (e) => {
-    setFolder1Files(e.target.files);
-  };
-
-  const handleFolder2Change = (e) => {
-    setFolder2Files(e.target.files);
-  };
-
-  const handleFolder1NameChange = (e) => {
-    setFolder1Name(e.target.value);
-  };
-
-  const handleFolder2NameChange = (e) => {
-    setFolder2Name(e.target.value);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!folder1Files || !folder2Files || !modelName || !folder1Name || !folder2Name) {
-      console.error('Please select and name both folders and provide a model name.');
+    if (!file1 || !file2 || !modelName) {
+      console.error('Please select both folders and provide a model name.');
       return;
     }
 
     const formData = new FormData();
+    formData.append('file1', file1);
+    formData.append('file2', file2);
     formData.append('modelName', modelName);
-
-    for (let i = 0; i < folder1Files.length; i++) {
-      formData.append('folder1Files', folder1Files[i]);
-    }
-
-    for (let i = 0; i < folder2Files.length; i++) {
-      formData.append('folder2Files', folder2Files[i]);
-    }
-
-    formData.append('folder1Name', folder1Name);
-    formData.append('folder2Name', folder2Name);
 
     try {
       setIsLoading(true);
-      const response = await axios.post('http://localhost:5000/train', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axios.post('http://localhost:5000/train', formData);
       setResult(response.data.success);
     } catch (error) {
       console.error('Error training model:', error);
@@ -76,6 +53,7 @@ const TrainNewSet = () => {
         </Typography>
         <form onSubmit={handleSubmit}>
           <FormControl variant="outlined" fullWidth margin="normal">
+            <InputLabel htmlFor="model-name">Model Name</InputLabel>
             <TextField
               id="model-name"
               label="Model Name"
@@ -87,44 +65,19 @@ const TrainNewSet = () => {
               required
             />
           </FormControl>
-          <FormControl variant="outlined" fullWidth margin="normal">
-          <TextField
-              id="model-name"
-              label="Folder Name"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              value={folder1Name}
-              onChange={handleFolder1NameChange}
-              required
-            />
-          </FormControl>
-         
           <input
             type="file"
             accept="image/*"
-            onChange={handleFolder1Change}
+            onChange={handleFileChange}
             webkitdirectory="true"
             directory="true"
             required
             style={{ marginTop: '16px', marginBottom: '16px' }}
           />
-          <FormControl variant="outlined" fullWidth margin="normal">
-          <TextField
-              id="model-name"
-              label="Folder Name"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              value={folder2Name}
-              onChange={handleFolder2NameChange}
-              required
-            />
-          </FormControl>
           <input
             type="file"
             accept="image/*"
-            onChange={handleFolder2Change}
+            onChange={handleFileChange2}
             webkitdirectory="true"
             directory="true"
             required
