@@ -4,6 +4,8 @@ import imghdr
 
 def imageClean():
     data_dir = 'uploads'
+    print("here")
+
     image_exts = ['jpeg', 'jpg', 'bmp', 'png']
     for image_class in os.listdir(data_dir):
         for image in os.listdir(os.path.join(data_dir, image_class)):

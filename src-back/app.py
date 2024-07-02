@@ -1,16 +1,15 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from train import train_model
-
 from werkzeug.utils import secure_filename
 import tensorflow as tf
 import numpy as np
 import cv2
+from train import train_model
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-CORS(app)  # This will enable CORS for all routes
+CORS(app)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Load the model
@@ -20,14 +19,16 @@ def load_model(model_name):
         raise FileNotFoundError(f"Model file {model_path} not found.")
     return tf.keras.models.load_model(model_path)
 
-# Predict function
+
 def predict_image(model, image_path, image_type1, image_type2):
     img = cv2.imread(image_path)
     if img is None:
         return "Image not found!"
-    resize = tf.image.resize(img, (256, 256))
-    yhat = model.predict(np.expand_dims(resize / 255, 0))
-
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = tf.image.resize(img, (256, 256))
+    img = img / 255.0  # Normalize
+    yhat = model.predict(np.expand_dims(img, 0))
+    print(yhat)
     prediction = image_type1 if yhat < 0.5 else image_type2
     return prediction
 
@@ -60,7 +61,7 @@ def predict():
 
 @app.route('/models', methods=['GET'])
 def list_models():
-    models_dir = 'models' 
+    models_dir = 'models'
     models = [f[:-6] for f in os.listdir(models_dir) if f.endswith('.keras')]
     return jsonify({'models': models})
 
@@ -77,22 +78,33 @@ def get_model_names(model_name):
 
 @app.route('/train', methods=['POST'])
 def train():
-    # Ensure model name is provided
     model_name = request.form.get('modelName')
-    if not model_name:
-        return jsonify({'error': 'No model name provided'}), 400
+    folder1_name = request.form.get('folder1Name')
+    folder2_name = request.form.get('folder2Name')
 
-    # Ensure two folders are uploaded
-    if 'file1' not in request.files or 'file2' not in request.files:
-        return jsonify({'error': 'Two folders must be uploaded'}), 400
-    
-    # Get folder names from uploaded files
-    folder1_name = request.files['file1'].filename
-    folder2_name = request.files['file2'].filename
+    if not model_name or not folder1_name or not folder2_name:
+        return jsonify({'error': 'Model name and folder names must be provided'}), 400
 
-    # Call train_model function with folder names and model name
+    folder1_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(folder1_name))
+    folder2_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(folder2_name))
+
+    os.makedirs(folder1_path, exist_ok=True)
+    os.makedirs(folder2_path, exist_ok=True)
+
+    file_keys1 = [key for key in request.files if key.startswith('file1_')]
+    file_keys2 = [key for key in request.files if key.startswith('file2_')]
+
+    for key in file_keys1:
+        file = request.files[key]
+        file.save(os.path.join(folder1_path, secure_filename(file.filename)))
+
+    for key in file_keys2:
+        file = request.files[key]
+        file.save(os.path.join(folder2_path, secure_filename(file.filename)))
+
     try:
-        train_model(folder1_name, folder2_name, model_name)
+        print("ok")
+        train_model(folder1_path.lstrip(8), folder2_path.lstrip(8), model_name)
         return jsonify({'success': f'Model {model_name} trained successfully'}), 200
     except Exception as e:
         return jsonify({'error': f'Failed to train model: {str(e)}'}), 500

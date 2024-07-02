@@ -34,8 +34,9 @@ def train_model(image_type1, image_type2, model_name):
 
     imageClean()
 
-    data = tf.keras.utils.image_dataset_from_directory('uploads')
-    data = data.map(lambda x, y: (x / 255, y))
+
+    data = tf.keras.utils.image_dataset_from_directory('uploads', image_size=(256, 256))
+    data = data.map(lambda x, y: (x / 255.0, y))
 
     train_size = int(len(data) * 0.7)
     val_size = int(len(data) * 0.2)
@@ -44,6 +45,7 @@ def train_model(image_type1, image_type2, model_name):
     train = data.take(train_size)
     val = data.skip(train_size).take(val_size)
     test = data.skip(train_size + val_size).take(test_size)
+    print("here")
 
     # Define the model
     model = create_model()

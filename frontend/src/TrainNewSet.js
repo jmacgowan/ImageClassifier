@@ -1,37 +1,53 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Button, Typography, Container, Box, Card, CardContent, FormControl, InputLabel, TextField } from '@mui/material';
+import { Button, Typography, Container, Box, Card, CardContent, FormControl, TextField } from '@mui/material';
 
 const TrainNewSet = () => {
-  const [file1, setFile1] = useState(null);
-  const [file2, setFile2] = useState(null);
+  const [files1, setFiles1] = useState([]);
+  const [files2, setFiles2] = useState([]);
+  const [folder1Name, setFolder1Name] = useState('');
+  const [folder2Name, setFolder2Name] = useState('');
   const [modelName, setModelName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState('');
 
-  const handleFileChange = (e) => {
-    setFile1(e.target.files[0]);
+  const handleFilesChange1 = (e) => {
+    setFiles1(e.target.files);
   };
 
-  const handleFileChange2 = (e) => {
-    setFile2(e.target.files[0]);
+  const handleFilesChange2 = (e) => {
+    setFiles2(e.target.files);
   };
 
   const handleModelNameChange = (e) => {
     setModelName(e.target.value);
   };
 
+  const handleFolder1NameChange = (e) => {
+    setFolder1Name(e.target.value);
+  };
+
+  const handleFolder2NameChange = (e) => {
+    setFolder2Name(e.target.value);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!file1 || !file2 || !modelName) {
+    if (!files1.length || !files2.length || !modelName) {
       console.error('Please select both folders and provide a model name.');
       return;
     }
 
     const formData = new FormData();
-    formData.append('file1', file1);
-    formData.append('file2', file2);
+    Array.from(files1).forEach((file, idx) => {
+      formData.append(`file1_${idx}`, file);
+    });
+    Array.from(files2).forEach((file, idx) => {
+      formData.append(`file2_${idx}`, file);
+    });
+    formData.append('folder1Name', folder1Name);
+    formData.append('folder2Name', folder2Name);
     formData.append('modelName', modelName);
 
     try {
@@ -40,6 +56,7 @@ const TrainNewSet = () => {
       setResult(response.data.success);
     } catch (error) {
       console.error('Error training model:', error);
+      setResult('Error training model');
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +70,6 @@ const TrainNewSet = () => {
         </Typography>
         <form onSubmit={handleSubmit}>
           <FormControl variant="outlined" fullWidth margin="normal">
-            <InputLabel htmlFor="model-name">Model Name</InputLabel>
             <TextField
               id="model-name"
               label="Model Name"
@@ -65,21 +81,47 @@ const TrainNewSet = () => {
               required
             />
           </FormControl>
+          <FormControl variant="outlined" fullWidth margin="normal">
+            <TextField
+              id="folder1-name"
+              label="Folder 1 Name"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              value={folder1Name}
+              onChange={handleFolder1NameChange}
+              required
+            />
+          </FormControl>
           <input
             type="file"
             accept="image/*"
-            onChange={handleFileChange}
+            onChange={handleFilesChange1}
             webkitdirectory="true"
             directory="true"
+            multiple
             required
             style={{ marginTop: '16px', marginBottom: '16px' }}
           />
+          <FormControl variant="outlined" fullWidth margin="normal">
+            <TextField
+              id="folder2-name"
+              label="Folder 2 Name"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              value={folder2Name}
+              onChange={handleFolder2NameChange}
+              required
+            />
+          </FormControl>
           <input
             type="file"
             accept="image/*"
-            onChange={handleFileChange2}
+            onChange={handleFilesChange2}
             webkitdirectory="true"
             directory="true"
+            multiple
             required
             style={{ marginTop: '16px', marginBottom: '16px' }}
           />
